@@ -33,30 +33,22 @@ struct conditional_layer_cfg {
     int8_t then_layer;
 };
 
-// Maximum number of if-layers per conditional layer config
-#define MAX_IF_LAYERS 8
+// Simplified conditional layer implementation for Zephyr 3.5.0 compatibility
+// This avoids problematic DT_FOREACH_PROP_ELEM macros
 
-// Store conditional layer config with then-layer and pre-calculated mask
-struct conditional_layer_data {
-    int8_t then_layer;
-    zmk_keymap_layers_state_t if_layers_mask;
-};
-
-// Build-time mask calculation using explicit indices (supports up to 8 layers)
-// This works around Zephyr 3.5.0 DT_FOREACH_PROP_ELEM issues
-#define IF_LAYER_BIT_AT(n, idx) ((idx) < DT_PROP_LEN(n, if_layers) ? BIT(DT_PROP_BY_IDX(n, if_layers, idx)) : 0)
-#define IF_LAYERS_MASK(n) (IF_LAYER_BIT_AT(n, 0) | IF_LAYER_BIT_AT(n, 1) | IF_LAYER_BIT_AT(n, 2) | \
-                           IF_LAYER_BIT_AT(n, 3) | IF_LAYER_BIT_AT(n, 4) | IF_LAYER_BIT_AT(n, 5) | \
-                           IF_LAYER_BIT_AT(n, 6) | IF_LAYER_BIT_AT(n, 7))
+// Extract layer indices using simpler macros
+// We need to support up to 2 layers (your config uses if-layers = <2 5>)
+#define COND_LAYER_MASK(n) (BIT(DT_PROP_BY_IDX(n, if_layers, 0)) | BIT(DT_PROP_BY_IDX(n, if_layers, 1)))
 
 #define CONDITIONAL_LAYER_DECL(n)                                                                  \
-    { .then_layer = DT_PROP(n, then_layer), .if_layers_mask = IF_LAYERS_MASK(n) },
+    { .then_layer = DT_PROP(n, then_layer), .if_layers_state_mask = COND_LAYER_MASK(n) },
 
-static const struct conditional_layer_data CONDITIONAL_LAYERS[] = {
+// All conditional layer configurations in the keymap.
+static const struct conditional_layer_cfg CONDITIONAL_LAYER_CFGS[] = {
     DT_INST_FOREACH_CHILD(0, CONDITIONAL_LAYER_DECL)};
 
-static const int32_t NUM_CONDITIONAL_LAYERS =
-    sizeof(CONDITIONAL_LAYERS) / sizeof(*CONDITIONAL_LAYERS);
+static const int32_t NUM_CONDITIONAL_LAYER_CFGS =
+    sizeof(CONDITIONAL_LAYER_CFGS) / sizeof(*CONDITIONAL_LAYER_CFGS);
 
 static void conditional_layer_activate(int8_t layer) {
     // This may trigger another event that could, in turn, activate additional then-layers. However,
@@ -98,9 +90,9 @@ static int layer_state_changed_listener(const zmk_event_t *ev) {
 
         // On layer state changes, examines each conditional layer config to determine if then-layer
         // in the config should activate based on the currently active set of if-layers.
-        for (int i = 0; i < NUM_CONDITIONAL_LAYERS; i++) {
-            const struct conditional_layer_data *cfg = &CONDITIONAL_LAYERS[i];
-            zmk_keymap_layers_state_t mask = cfg->if_layers_mask;
+        for (int i = 0; i < NUM_CONDITIONAL_LAYER_CFGS; i++) {
+            const struct conditional_layer_cfg *cfg = &CONDITIONAL_LAYER_CFGS[i];
+            zmk_keymap_layers_state_t mask = cfg->if_layers_state_mask;
             then_layers |= BIT(cfg->then_layer);
             max_then_layer = MAX(max_then_layer, cfg->then_layer);
 

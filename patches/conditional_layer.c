@@ -88,6 +88,10 @@ static int layer_state_changed_listener(const zmk_event_t *ev) {
 
         conditional_layer_updates_needed = false;
 
+        // Debug: log current layer state
+        zmk_keymap_layers_state_t current_state = zmk_keymap_layer_state();
+        LOG_DBG("Conditional layer check: current_state=0x%x", current_state);
+
         // On layer state changes, examines each conditional layer config to determine if then-layer
         // in the config should activate based on the currently active set of if-layers.
         for (int i = 0; i < NUM_CONDITIONAL_LAYER_CFGS; i++) {
@@ -96,10 +100,13 @@ static int layer_state_changed_listener(const zmk_event_t *ev) {
             then_layers |= BIT(cfg->then_layer);
             max_then_layer = MAX(max_then_layer, cfg->then_layer);
 
+            LOG_DBG("Config %d: then_layer=%d, mask=0x%x", i, cfg->then_layer, mask);
+
             // Activate then-layer if and only if all if-layers are already active. Note that we
             // reevaluate the current layer state for each config since activation of one layer can
             // also trigger activation of another.
-            if ((zmk_keymap_layer_state() & mask) == mask) {
+            if ((current_state & mask) == mask) {
+                LOG_DBG("  -> Activating then_layer %d", cfg->then_layer);
                 then_layer_state |= BIT(cfg->then_layer);
             }
         }

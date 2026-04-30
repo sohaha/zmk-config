@@ -1,0 +1,497 @@
+// Copyright (c) 2022 The ZMK Contributors
+// SPDX-License-Identifier: MIT
+
+// 引入 ZMK 标准行为定义
+#include <behaviors.dtsi>
+// 引入 ZMK 按键绑定常量
+#include <dt-bindings/zmk/keys.h>
+// 引入 ZMK 鼠标行为绑定
+#include <dt-bindings/zmk/mouse.h>
+// 引入 ZMK 蓝牙功能绑定
+#include <dt-bindings/zmk/bt.h>
+
+// 主行修饰键（Home Row Mods）宏定义
+// 左手：按住为修饰键(LALT左Alt, LSHFT左Shift, LGUI左Win, LCTRL左Ctrl)，点击为对应字母
+#define HRML(k1,k2,k3,k4) &ht LALT k1  &ht LSHFT k2  &ht LGUI k3  &ht LCTRL k4
+// 右手：按住为修饰键(RCTRL右Ctrl, RGUI右Win, RSHFT右Shift, RALT右Alt)，点击为对应字母
+#define HRMR(k1,k2,k3,k4) &ht RCTRL k1  &ht RGUI k2  &ht RSHFT k3  &ht RALT k4
+// 组合键宏：左Ctrl+左Shift+指定按键
+#define LCS(keycode) APPLY_MODS(MOD_LCTL | MOD_LSFT, keycode)
+// 组合键宏：左Ctrl+左Gui+指定按键
+#define LCG(keycode) APPLY_MODS(MOD_LCTL | MOD_LGUI, keycode)
+// 组合键宏：左Alt+指定按键
+#define LA(keycode) APPLY_MODS(MOD_LALT, keycode)
+// 组合键宏：左Alt+左Shift+指定按键
+#define LAS(keycode) APPLY_MODS(MOD_LALT | MOD_LSFT, keycode)
+// 组合键宏：左Ctrl+左Gui+左Alt+左Shift+指定按键
+#define LCGAS(keycode) APPLY_MODS(MOD_LCTL | MOD_LGUI | MOD_LALT | MOD_LSFT, keycode)
+
+
+// 旋转编码器用于鼠标滚轮滚动的参数定义
+#define ROT_MSC_VAL 280
+// 编码器上滚（Y轴负方向移动）
+#define ROT_MSC_SUP MOVE_Y(ROT_MSC_VAL)
+// 编码器下滚（Y轴正方向移动）
+#define ROT_MSC_SDN MOVE_Y(-ROT_MSC_VAL)
+// 编码器左滚（X轴负方向移动）
+#define ROT_MSC_SLT MOVE_X(-ROT_MSC_VAL)
+// 编码器右滚（X轴正方向移动）
+#define ROT_MSC_SRT MOVE_X(ROT_MSC_VAL)
+
+
+// 引入鼠标设置相关行为定义
+#include <behaviors/mouse_setting.dtsi>
+// 引入鼠标设置绑定常量
+#include <dt-bindings/zmk/mouse_settings.h>
+// 鼠标触控板灵敏度增加
+#define U_MSS_TP_S_I &mms MS_TP_SENSITIVITY_INCR
+// 鼠标触控板灵敏度降低
+#define U_MSS_TP_S_D &mms MS_TP_SENSITIVITY_DECR
+
+/ {
+    // 自定义行为定义区
+    behaviors {
+        // 按住-点击行为（Hold-Tap）：按住触发修饰键/层切换，点击触发按键
+        ht: hold_tap {
+            display-name = "Hold Tap";
+            label = "hold_tap";
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            // 平衡模式：在点击和按住之间取平衡
+            flavor = "balanced";
+            // 按住判定时间（毫秒），超过此时间判定为按住
+            tapping-term-ms = <220>;
+            // 快速点击间隔（毫秒），在此间隔内重复点击视为连续点击（禁用修饰键）
+            quick-tap-ms = <200>;
+            // global-quick-tap;
+            // 绑定：hold时触发kp（按键），tap时触发kp（按键）
+            bindings = <&kp>, <&kp>;
+        };
+        // 层切换-点击行为（Layer-Tap）：按住切换到指定层，点击触发按键
+        lt: layer_tap {
+            display-name = "Layer Tap";
+            compatible = "zmk,behavior-hold-tap";
+            label = "LAYER_TAP";
+            #binding-cells = <2>;
+            // flavor = "balanced";
+            // 按住判定时间（毫秒）
+            tapping-term-ms = <200>;
+            quick-tap-ms = <200>;
+            // global-quick-tap;
+            // 绑定：hold时触发mo（层切换），tap时触发kp（按键）
+            bindings = <&mo>, <&kp>;
+        };
+        // 旋转编码器鼠标滚轮行为：控制鼠标滚轮滚动
+        rot_msc: sensor_rotate_msc {
+            compatible = "zmk,behavior-sensor-rotate-var";
+            #sensor-binding-cells = <2>;
+            bindings = <&msc>, <&msc>;
+            // 编码器触发模拟点击的时间（毫秒）
+            tap-ms = <20>;
+        };
+    };
+
+
+    // 组合键定义区：同时按下多个指定位置的按键触发特定功能
+    combos {
+        compatible = "zmk,combos";
+        // 组合键：Tab键（位置2+3同时按下）
+        combo_tab {
+            timeout-ms = <50>;
+            key-positions = <2 3>;
+            bindings = <&kp TAB>;
+        };
+        // 组合键：鼠标中键（位置33+34同时按下）
+        middle_click {
+            timeout-ms = <50>;
+            key-positions = <33 34>;
+            bindings = <&mkp MCLK>;
+        };
+    };
+
+    // 条件层定义：当多个层同时激活时自动切换到指定层
+    conditional_layers {
+        compatible = "zmk,conditional-layers";
+        // 当层5（编辑层）和层2（符号层）同时激活时，自动切换到层4（特殊系统层）
+        special_layer {
+            if-layers = <5 2>;
+            then-layer = <4>;
+        };
+    };
+
+    // 宏定义区：一键执行多个按键序列
+    macros {
+        // Windows 睡眠宏：执行 Win+X → U → S 进入睡眠
+        win_sleep: win_sleep {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&kp LG(X)>   // 打开快速菜单
+                , <&macro_wait_time 50>    // 等待菜单弹出
+                , <&kp U>       // 选择"关机或注销"
+                , <&macro_wait_time 50>    // 等待子菜单
+                , <&kp S>;      // 选择"睡眠"
+        };
+        // macOS 睡眠宏：Ctrl+Shift+电源键进入睡眠（需键盘有电源键）
+        mac_sleep: mac_sleep {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&kp LCG(Q)>;
+        };
+        // Linux 睡眠宏：Win+L 锁屏（多数发行版通用，需配合电源管理设置自动睡眠）
+        lin_sleep: lin_sleep {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&kp LG(L)>;
+        };
+    };
+
+    // 键映射（键盘布局）主定义区
+    keymap {
+        compatible = "zmk,keymap";
+
+        // 默认层（基础打字层，主行使用Home Row Mods）
+        default_layer {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ Q        │ 功能层14  │ E        │ R        │ T        │   │ Y        │ U        │ I        │ O        │ P        │
+            &kp Q      &lt 14 W   &ht F13 E      &kp R      &kp T      &kp Y      &kp U     &ht F13 I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+        //│ 左Alt    │ 左Shift   │ 左Win    │ 左Ctrl   │ 层3按住   │   │ 层3按住    │ 右Ctrl   │ 右Win    │ 右Shift  │ ; =右Alt  │
+            HRML(A,        S,         D,         F)     &lt 3 G         &lt 3 H    HRMR(J,        K,         L,        SEMI)
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+        //│ 右Ctrl   │ 右Win     │ 右Shift   │ 右Alt   │ B        │   │ N        │ M=左Alt  │,<=左Shift│.>=左Win  │ / ?=左Ctrl │
+            HRMR(Z,        X,        C,          V)     &kp B          &kp N      HRML(M,        COMMA,     DOT,      FSLH)
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //           │  锁屏    │     回车  │ Esc     │ 鼠标右键   │   │ 鼠标左键 │退格  │空格                │F13  │
+        //           │          │      层1  │ 编辑层5  │           │   │        │层2  │左Shift              │F13停  │
+                    &kp LCG(Q)  &lt 1 ENTER  &lt  5 ESC  &mkp RCLK     &mkp LCLK  &lt 2 BSPC &mt LSHFT SPACE  &kp F13
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制鼠标滚轮上下，右侧编码器控制横向滚动
+            sensor-bindings = <&rot_msc ROT_MSC_SUP ROT_MSC_SDN &rot_msc ROT_MSC_SLT ROT_MSC_SRT>;
+        };
+
+        // 1 数字层/功能键层（左拇指按住回车键[层1]进入）
+        num_layer {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭────────────────┬──────────┬──────────┬──────────┬─────────────╮
+        //│ F9       │ F10      │ F11      │ F12      │ INSERT   │   │ .              │ 7        │ 8        │ 9        │  =          │
+        //│ F9       │ F10      │ F11      │ F12      │ 插入键    │   │ 小数点          │ 7        │ 8        │ 9        │ 等于号       │
+            &kp F9     &kp F10    &kp F11    &kp F12    &kp INS        &kp DOT         &kp N7     &kp N8     &kp N9    &kp EQUAL  
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
+        //│ F5       │ F6       │  F7      │  F8      │ PAGE UP  │   │ -              │ 4        │ 5        │ 6        │  +          │
+        //│ F5       │ F6       │ F7       │ F8       │ 上一页    │   │ 减号            │ 4        │ 5        │ 6        │ 加号        │
+            &kp F5     &kp F6      &kp F7     &kp F8    &kp PG_UP      &kp KP_MINUS     &kp N4     &kp N5    &kp N6      &kp KP_PLUS   
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
+        //│ F1       │  F2      │  F3       │  F4     │ PAGE DN  │   │ *              │ 1        │ 2        │ 3        │ /           │
+        //│ F1       │ F2       │ F3       │ F4       │ 下一页    │   │ 乘号            │ 1        │ 2        │ 3        │ 除号        │
+           &kp F1     &kp F2     &kp F3     &kp F4     &kp PG_DN       &kp KP_MULTIPLY  &kp N1     &kp N2     &kp N3     &kp KP_DIVIDE 
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 睡眠宏   │ 保持     │ 保持     │ 保持      │   │ 保持     │ 0        │ .         │ 保持      │
+                       &win_sleep  &trans    &trans     &trans         &trans     &kp N0     &kp DOT       &trans
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制上下方向键，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp UP DOWN &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 2 符号层（右拇指按住退格键[层2]进入）
+        sym_layer {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭────────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  '       │  "       │  !       │  *       │  ~       │   │ scroll up  │  _       │          │  `       │  |       │
+        //│ 单引号   │ 双引号   │ 感叹号   │ 星号     │ 波浪号    │   │ 鼠标上滚    │ 下划线   │ 保持     │ 反引号   │ 竖线     │
+            &kp SQT     &kp DQT   &kp EXCL   &kp STAR   &kp TILDE      &msc SCRL_UP    &kp UNDER  &trans  &kp GRAVE  &kp PIPE 
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  @       │  #       │  $       │  (       │  )       │   │ scroll down│  [       │  ]       │ {        │  }       │
+        //│ @符号    │ #号      │ $符号    │ 左括号   │ 右括号    │   │ 鼠标下滚    │ 左中括号 │ 右中括号 │ 左花括号 │ 右花括号 │
+            &kp AT     &kp HASH   &kp DLLR   &kp LPAR   &kp RPAR       &msc SCRL_DOWN  &kp LBKT   &kp RBKT  &kp LBRC   &kp RBRC 
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────┼──────────┼──────────┼──────────┼──────────┤
+        //│          │  %       │          │ ^        │  \       │   │  &         │          │          │          │          │
+        //│ 保持     │ 百分号   │ 保持     │ 脱字符   │ 反斜杠    │   │ &符号      │ 保持     │ 保持     │ 保持     │ 保持     │
+            &trans     &kp PRCNT  &trans     &kp CARET  &kp BSLH       &kp AMPS     &trans     &trans    &trans     &trans
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├────────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 保持     │ 保持     │ 保持     │ 保持      │   │ 保持     │ 保持     │ 保持     │ 保持     │
+                        &trans     &trans    &trans     &trans         &trans       &trans     &trans     &trans
+        //                                 ╰──────────┴──────────╯   ╰────────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 3 组合层（按住Esc或G/H键进入；与层2同时按住触发层4）
+        comb_layer {
+            bindings = <
+        //╭──────────┬────────────┬───────────┬──────────────┬─────────────╮   ╭──────────────┬───────────────┬─────────────┬─────────────────┬──────────╮
+        //│ LALT+F4  │ LALT+Tab   │ END       │              │             │   │ 后退         │ C-PgDn        │ C-PgUp      │   前进       │ Previous │
+        //│ 关闭窗口 │ 切换窗口   │ 行尾      │ 保持             │ LCG(F14)    │   │  后退         │ 标签页下翻    │ 标签页上翻   │ 浏览器前进      │ 上一曲   │
+           &kp LA(F4)  &kp LA(TAB)  &kp END     &trans         &kp LCG(F14)      &kp LCG(LEFT)  &kp LC(PG_DN)   &kp LC(PG_UP) &kp LCG(RIGHT)  &kp C_PREV 
+        //├──────────┼────────────┼───────────┼──────────────┼─────────────┤   ├──────────────┼───────────────┼─────────────┼─────────────────┼──────────┤
+        //│HOME      │            │ DELETE    │ C-Right      │             │   │ Left         │ Down          │ Up          │ Right           │          │
+        //│ 行首      │ 保持        │ 删除键     │ 跳到词尾     │ LCG(F13)     │   │ 左箭头       │ 下箭头        │ 上箭头       │ 右箭头          │ 保持     │
+           &kp HOME    &trans       &kp DEL    &kp LC(RIGHT)   &kp LCG(F13)      &kp LEFT       &kp DOWN        &kp UP        &kp RIGHT         &trans
+        //├──────────┼────────────┼───────────┼──────────────┼─────────────┤   ├──────────────┼───────────────┼─────────────┼─────────────────┼──────────┤
+        //│          │            │           │              │ C-Left      │   │ Next         │ Mute          │ Vol -       │ Vol +           │ Play     │
+        //│ 保持     │ 保持       │ 保持      │ 保持         │ 跳到词首    │   │ 下一曲       │ 静音          │ 音量减       │ 音量增           │ 播放暂停 │
+            &trans     &trans       &trans      &trans         &kp LC(LEFT)      &kp C_NEXT     &kp C_MUTE      &kp C_VOL_DN  &kp C_VOL_UP      &kp C_PP
+        //╰──────────┴────────────┴───────────┼──────────────┼─────────────┤   ├──────────────┼───────────────┼─────────────┴─────────────────┴──────────╯
+        //                                    │ 保持         │ 保持        │   │ 保持         │ 保持          │ 保持        │ 保持             │
+                        &trans     &trans    &trans     &trans         &trans       &trans     &trans     &trans
+        //                                    ╰──────────────┴─────────────╯   ╰──────────────┴───────────────╯
+            >;
+            sensor-bindings = <&rot_msc ROT_MSC_SUP ROT_MSC_SDN &rot_msc ROT_MSC_SLT ROT_MSC_SRT>;
+        };
+
+        // 特殊层/系统层（层5+层3同时按住触发，蓝牙管理+层切换）
+        special_layer {
+            bindings = <
+        //╭──────────────┬──────────────┬──────────┬─────────────┬────────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│              │              │          │ PROFILE 3   │PROFILE 0   │   │          │          │          │          │          │
+        //│ 保持         │ 保持         │ 保持     │ 蓝牙配置3   │ 蓝牙配置0  │   │ 切换到层0│ 切换到层1│ 切换到层2│ 切换到层3│ 切换到层4│
+           &trans           &trans        &trans     &bt BT_SEL 3 &bt BT_SEL 0      &to 0     &to 1       &to 2      &to 3      &to 4
+        //├──────────────┼──────────────┼──────────┼─────────────┼────────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│              │              │          │ PROFILE 4   │PROFILE 1   │   │          │          │          │          │          │
+        //│ 保持         │ 保持         │ 保持     │ 蓝牙配置4   │ 蓝牙配置1  │   │ 切换到层5│ 切换到层6│ 切换到层7│ 切换到层8│ 切换到层9│
+           &trans           &trans        &trans    &bt BT_SEL 4 &bt BT_SEL 1       &to 5     &to 6       &to 7      &to 8      &to 9
+        //├──────────────┼──────────────┼──────────┼─────────────┼────────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│              │              │          │ CLEAR BT    │PROFILE 2   │   │          │          │          │          │          │
+        //│ 触控灵敏度降 │ 触控灵敏度升 │ 保持     │ 清除蓝牙配对│ 蓝牙配置2  │   │ 切换到层10│切换到层11│切换到层12│切换到层13│切换到层14│
+           U_MSS_TP_S_D    U_MSS_TP_S_I   &trans   &bt BT_CLR   &bt BT_SEL 2        &to 10    &to 11      &to 12     &to 13     &to 14
+        //╰──────────────┴──────────────┴──────────┼─────────────┼────────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                         │ 保持        │ 保持       │   │ 保持     │ 保持     │ 保持     │ 保持     │
+                       &trans     &trans    &trans     &trans             &trans     &trans     &trans     &trans
+        //                                         ╰─────────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 5 编辑层
+        layer_5 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层6（保留层，供未来扩展使用）
+        layer_6 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层7（保留层，供未来扩展使用）
+        layer_7 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层8（保留层，供未来扩展使用）
+        layer_8 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层9（保留层，供未来扩展使用）
+        layer_9 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层10（保留层，供未来扩展使用）
+        layer_10 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层11（保留层，供未来扩展使用）
+        layer_11 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 层12（保留层，供未来扩展使用）
+        layer_12 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 13 工具层
+        layer_13 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
+        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
+            &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
+            &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
+                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
+        };
+
+        // 14 AeroSpace 层
+        layer_14 {
+            bindings = <
+        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭────────────────────────┬──────────────────────┬───────────────────┬─────────────┬─────────────╮
+        //│   Q      │  W       │  E       │  R       │  T       │   │ All3                   │ 7                    │ 8                 │ 9        │  =          │
+        //│ Q       │ W      │ E      │ E      │ R    │  T       │   | All3                   │ 7                    │ 8                 │ 9        │ 等于号       │
+            &ht LAS(Q) LA(Q)      &ht LAS(W) LA(W)      &ht LAS(E) LA(E)      &ht LAS(R) LA(R)      &ht LAS(T) LA(T)         &ht LCGAS(N3) LCGAS(N3)  &ht LAS(N7) LA(N7)     &ht LAS(N8) LA(N8)   &ht LAS(N9) LA(N9)    &ht LAS(EQUAL) LA(EQUAL)  
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
+        //│ A       │  S       │  D       │  F       │  G       │   │ All2           │ 4        │ 5        │ 6        │  +          │
+        //│ A       │  S       │  D       │  F       │  G        │   │ All2            │ 4        │ 5        │ 6        │ 加号        │
+            &ht LAS(A) LA(A)      &ht LAS(S) LA(S)      &ht LAS(D) LA(D)      &ht LAS(F) LA(F)      &ht LAS(G) LA(G)       &ht LCGAS(N2) LCGAS(N2)     &ht LAS(N4) LA(N4)     &ht LAS(N5) LA(N5)    &ht LAS(N6) LA(N6)      &ht LAS(KP_PLUS) LA(KP_PLUS)   
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
+        //│  Z       │  X       │  C       │  V       │  B       │   │ All1            │ 1        │ 2        │ 3        │ /           │
+        //│   Z       │  X       │  C       │  V       │  B       │   │ All1            │ 1        │ 2        │ 3        │ 除号        │
+           &ht LAS(Z) LA(Z)      &ht LAS(X) LA(X)      &ht LAS(C) LA(C)      &ht LAS(V) LA(V)      &ht LAS(B) LA(B)        &ht LCGAS(N1) LCGAS(N1)  &ht LAS(N1) LA(N1)     &ht LAS(N2) LA(N2)     &ht LAS(N3) LA(N3)     &ht LAS(KP_DIVIDE) LA(KP_DIVIDE) 
+        //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
+        //           │ 保持      │ 保持     │ 保持      │ 保持      │   │ 保持     │ .        │ 0         │ 保持      │
+                       &trans  &trans    &trans     &trans         &trans     &ht LAS(DOT) LA(DOT)     &ht LAS(N0) LA(N0)       &trans
+        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+            >;
+            // 编码器绑定：左侧编码器控制上下方向键，右侧编码器控制左右方向键
+            sensor-bindings = <&inc_dec_kp UP DOWN &inc_dec_kp LEFT RIGHT>;
+        };
+    };
+};

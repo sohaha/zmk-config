@@ -114,7 +114,7 @@
         compatible = "zmk,conditional-layers";
         // 当层5（编辑层）和层2（符号层）同时激活时，自动切换到层4（特殊系统层）
         special_layer {
-            if-layers = <5 2>;
+            if-layers = <2 5>;
             then-layer = <4>;
         };
     };
@@ -225,7 +225,7 @@
             sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;
         };
 
-        // 3 组合层（按住Esc或G/H键进入；与层2同时按住触发层4）
+        // 3 组合层（按住Esc进入；与层2同时按住触发层4）
         comb_layer {
             bindings = <
         //╭──────────┬────────────┬───────────┬──────────────┬─────────────╮   ╭──────────────┬───────────────┬─────────────┬─────────────────┬──────────╮
@@ -248,7 +248,7 @@
             sensor-bindings = <&rot_msc ROT_MSC_SUP ROT_MSC_SDN &rot_msc ROT_MSC_SLT ROT_MSC_SRT>;
         };
 
-        // 特殊层/系统层（层5+层3同时按住触发，蓝牙管理+层切换）
+        // 4 特殊层/系统层（层2+层5同时按住触发，蓝牙管理+层切换）
         special_layer {
             bindings = <
         //╭──────────────┬──────────────┬──────────┬─────────────┬────────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
@@ -276,9 +276,9 @@
         layer_5 {
             bindings = <
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
-        //│  Q       │  W       │  E       │  R       │  T       │   │  Y       │  U       │  I       │  O       │  P       │
+        //│  Q       │  W       │  E       │  R       │  T       │   │  撤销       │  U       │  I       │  重做       │  P       │
         //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
-            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp Y      &kp U      &kp I      &kp O      &kp P
+            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp LG(Z)   &kp U      &kp I      &kp LS(LG(Z))      &kp P
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
             &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI

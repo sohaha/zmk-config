@@ -66,6 +66,15 @@ else
     echo -e "${GREEN}使用本地已存在的 west 依赖${NC}"
 fi
 
+# 应用 ZMK 补丁（修复条件层兼容性）
+PATCH_FILE="$REPO_ROOT/patches/conditional_layer.c"
+ZMK_TARGET="$REPO_ROOT/zmk/app/src/conditional_layer.c"
+if [ -f "$PATCH_FILE" ] && [ -f "$ZMK_TARGET" ]; then
+    echo -e "${YELLOW}应用 ZMK 条件层补丁...${NC}"
+    cp "$PATCH_FILE" "$ZMK_TARGET"
+    echo -e "${GREEN}补丁应用完成 ✓${NC}"
+fi
+
 # 定义构建任务: name|board|shield|snippet
 declare -a BUILDS=(
     "left|nice_nano_v2|pskeeb5_left|"

@@ -2,4 +2,42 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3
+    runs-on: ubuntu-latest
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: West Init
+        run: west init -l config
+
+      - name: West Update
+        run: west update --fetch-opt=--filter=tree:0
+
+      - name: Apply ZMK Patches
+        run: |
+          echo "Applying conditional layer patch..."
+          cp patches/conditional_layer.c zmk/app/src/conditional_layer.c
+          echo "Patch applied successfully"
+
+      - name: West Zephyr Export
+        run: west zephyr-export
+
+      - name: Build Left
+        run: west build -s zmk/app -b nice_nano_v2 -d build/left -- -DSHIELD=pskeeb5_left
+
+      - name: Build Right
+        run: west build -s zmk/app -b nice_nano_v2 -d build/right -- -DSHIELD=pskeeb5_right -DSNIPPET=studio-rpc-usb-uart
+
+      - name: Build Settings Reset
+        run: west build -s zmk/app -b nice_nano_v2 -d build/settings_reset -- -DSHIELD=settings_reset
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            build/left/zephyr/zmk.uf2
+            build/right/zephyr/zmk.uf2
+            build/settings_reset/zephyr/zmk.uf2

@@ -21,6 +21,8 @@
 #define LCG(keycode) APPLY_MODS(MOD_LCTL | MOD_LGUI, keycode)
 // 组合键宏：左Alt+指定按键
 #define LA(keycode) APPLY_MODS(MOD_LALT, keycode)
+// 组合键宏：左Alt+左Gui+指定按键
+#define LAG(keycode) APPLY_MODS(MOD_LALT | MOD_LGUI, keycode)
 // 组合键宏：左Alt+左Shift+指定按键
 #define LAS(keycode) APPLY_MODS(MOD_LALT | MOD_LSFT, keycode)
 // 组合键宏：左Ctrl+左Gui+左Alt+左Shift+指定按键
@@ -141,7 +143,7 @@
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings
-                = <&kp LCG(Q)>;
+                = <&kp LG(LC(Q))>;
         };
         // Linux 睡眠宏：Win+L 锁屏（多数发行版通用，需配合电源管理设置自动睡眠）
         lin_sleep: lin_sleep {
@@ -235,7 +237,7 @@
         //╭──────────┬────────────┬───────────┬──────────────┬─────────────╮   ╭──────────────┬───────────────┬─────────────┬─────────────────┬──────────╮
         //│ LALT+F4  │ LALT+Tab   │ END       │              │             │   │ 后退         │ C-PgDn        │ C-PgUp      │   前进       │ Previous │
         //│ 关闭窗口 │ 切换窗口   │ 行尾      │ 保持             │ LCG(F14)    │   │  后退         │ 标签页下翻    │ 标签页上翻   │ 浏览器前进      │ 上一曲   │
-           &kp LA(F4)  &kp LA(TAB)  &kp END     &trans         &kp LCG(F14)      &kp LCG(LEFT)  &kp LC(PG_DN)   &kp LC(PG_UP) &kp LCG(RIGHT)  &kp C_PREV 
+           &kp LA(F4)  &kp LA(TAB)  &kp END     &trans         &kp LCG(F14)      &kp LAG(LEFT)  &kp LC(PG_DN)   &kp LC(PG_UP) &kp LAG(RIGHT)  &kp C_PREV 
         //├──────────┼────────────┼───────────┼──────────────┼─────────────┤   ├──────────────┼───────────────┼─────────────┼─────────────────┼──────────┤
         //│HOME      │            │ DELETE    │ C-Right      │             │   │ Left         │ Down          │ Up          │ Right           │          │
         //│ 行首      │ 保持        │ 删除键     │ 跳到词尾     │ LCG(F13)     │   │ 左箭头       │ 下箭头        │ 上箭头       │ 右箭头          │ 保持     │

@@ -112,9 +112,9 @@
     // 条件层定义：当多个层同时激活时自动切换到指定层
     conditional_layers {
         compatible = "zmk,conditional-layers";
-        // 当层5（编辑层）和层2（符号层）同时激活时，自动切换到层4（特殊系统层）
+        // 当层2（符号层）和层3（组合层）同时激活时，自动切换到层4（特殊系统层）
         special_layer {
-            if-layers = <2 5>;
+            if-layers = <2 3>;
             then-layer = <4>;
         };
     };

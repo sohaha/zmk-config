@@ -45,7 +45,7 @@ struct conditional_layer_cfg {
 
 // All conditional layer configurations in the keymap.
 static const struct conditional_layer_cfg CONDITIONAL_LAYER_CFGS[] = {
-    DT_INST_FOREACH_CHILD(0, CONDITIONAL_LAYER_DECL)};
+    DT_FOREACH_CHILD(DT_N_S_conditional_layers, CONDITIONAL_LAYER_DECL)};
 
 static const int32_t NUM_CONDITIONAL_LAYER_CFGS =
     sizeof(CONDITIONAL_LAYER_CFGS) / sizeof(*CONDITIONAL_LAYER_CFGS);

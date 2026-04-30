@@ -112,11 +112,15 @@
     // 条件层定义：当多个层同时激活时自动切换到指定层
     conditional_layers {
         compatible = "zmk,conditional-layers";
-        // 当层2（符号层）和层3（组合层）同时激活时，自动切换到层4（特殊系统层）
+        // 当层2和层2同时激活时，自动切换到层4（特殊系统层）
         special_layer {
             if-layers = <2 3>;
             then-layer = <4>;
         };
+        special_layer {
+            if-layers = <1 2>;
+            then-layer = <6>;
+        }; 
     };
 
     // 宏定义区：一键执行多个按键序列
@@ -168,9 +172,9 @@
         //│ 右Ctrl   │ 右Win     │ 右Shift   │ 右Alt   │ B        │   │ N        │ M=左Alt  │,<=左Shift│.>=左Win  │ / ?=左Ctrl │
             HRMR(Z,        X,        C,          V)     &kp B          &kp N      HRML(M,        COMMA,     DOT,      FSLH)
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
-        //           │  锁屏    │     回车  │ Esc     │ 鼠标右键   │   │ 鼠标左键 │退格  │空格                │F13  │
-        //           │          │      层1  │ 编辑层5  │           │   │        │层2  │左Shift              │F13停  │
-                    &kp LCG(Q)  &lt 1 ENTER  &lt  5 ESC  &mkp RCLK     &mkp LCLK  &lt 2 BSPC &mt LSHFT SPACE  &kp F13
+        //           │  锁屏    │     回车  │ Esc     │ 鼠标右键   │   │ 鼠标左键 │退格  │空格                │F14  │
+        //           │          │      层1  │ 编辑层5  │           │   │        │层2  │左Shift              │F14  │
+                    &mac_sleep  &lt 1 ENTER  &lt  5 ESC  &mkp RCLK     &mkp LCLK  &lt 2 BSPC &mt LSHFT SPACE  &kp F14
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
             >;
             // 编码器绑定：左侧编码器控制鼠标滚轮上下，右侧编码器控制横向滚动
@@ -193,8 +197,8 @@
         //│ F1       │ F2       │ F3       │ F4       │ 下一页    │   │ 乘号            │ 1        │ 2        │ 3        │ 除号        │
            &kp F1     &kp F2     &kp F3     &kp F4     &kp PG_DN       &kp KP_MULTIPLY  &kp N1     &kp N2     &kp N3     &kp KP_DIVIDE 
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
-        //                                 │ 睡眠宏   │ 保持     │ 保持     │ 保持      │   │ 保持     │ 0        │ .         │ 保持      │
-                       &win_sleep  &trans    &trans     &trans         &trans     &kp N0     &kp DOT       &trans
+        //           │ 睡眠宏   │ 保持     │ 保持     │ 保持      │   │ 保持     │ 0        │ .         │ 保持      │
+                       &win_sleep  &trans    &trans     &trans         &trans     &kp DOT     &kp N0       &trans
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
             >;
             // 编码器绑定：左侧编码器控制上下方向键，右侧编码器控制左右方向键
@@ -286,9 +290,9 @@
         //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
             &kp Z      &kp X      &kp C      &kp V      &kp B          &kp N      &kp M      &kp COMMA  &kp DOT    &kp FSLH
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
-        //                                 │ 回默认层 │ 回车     │ Esc      │ 鼠标右键  │   │ 鼠标左键 │ 退格     │ 空格     │ 播放暂停 │
-                       &to 0      &kp ENTER  &kp ESC    &mkp RCLK      &mkp LCLK  &kp BSPC   &kp SPACE  &kp C_PP
-        //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
+        //           │ 保持        │ 保持       │   │ 保持     │ 保持     │ 保持     │ 保持     │
+                       &trans     &trans    &trans     &trans             &trans     &trans     &trans     &trans
+        //                                         ╰─────────────┴──────────╯   ╰──────────┴──────────╯
             >;
             // 编码器绑定：左侧编码器控制音量，右侧编码器控制左右方向键
             sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp LEFT RIGHT>;

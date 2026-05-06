@@ -16,17 +16,17 @@
 // 右手：按住为修饰键(RCTRL右Ctrl, RGUI右Win, RSHFT右Shift, RALT右Alt)，点击为对应字母
 #define HRMR(k1,k2,k3,k4) &ht RCTRL k1  &ht RGUI k2  &ht RSHFT k3  &ht RALT k4
 // 组合键宏：左Ctrl+左Shift+指定按键
-#define LCS(keycode) APPLY_MODS(MOD_LCTL | MOD_LSFT, keycode)
+#define LCS(keycode) LC(LS(keycode))
 // 组合键宏：左Ctrl+左Gui+指定按键
-#define LCG(keycode) APPLY_MODS(MOD_LCTL | MOD_LGUI, keycode)
+#define LCG(keycode) LC(LA(LG(keycode)))
 // 组合键宏：左Alt+指定按键
-#define LA(keycode) APPLY_MODS(MOD_LALT, keycode)
+// #define LA(keycode) APPLY_MODS(MOD_LALT, keycode)
 // 组合键宏：左Alt+左Gui+指定按键
 #define LAG(keycode) APPLY_MODS(MOD_LALT | MOD_LGUI, keycode)
 // 组合键宏：左Alt+左Shift+指定按键
-#define LAS(keycode) APPLY_MODS(MOD_LALT | MOD_LSFT, keycode)
+#define LAS(keycode) LS(LA(keycode))
 // 组合键宏：左Ctrl+左Gui+左Alt+左Shift+指定按键
-#define LCGAS(keycode) APPLY_MODS(MOD_LCTL | MOD_LGUI | MOD_LALT | MOD_LSFT, keycode)
+#define LCGAS(keycode) LC(LA(LS(LG(keycode))))
 
 
 // 旋转编码器用于鼠标滚轮滚动的参数定义
@@ -171,12 +171,11 @@
             HRML(A,        S,         D,         F)     &lt 3 G         &lt 3 H    HRMR(J,        K,         L,        SEMI)
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  Z       │  X       │  C       │  V       │  B       │   │  N       │  M       │ , <      │ . >      │ / ?      │
-        //│ 右Ctrl   │ 右Win     │ 右Shift   │ 右Alt   │ B        │   │ N        │ M=左Alt  │,<=左Shift│.>=左Win  │ / ?=左Ctrl │
-            HRMR(Z,        X,        C,          V)     &kp B          &kp N      HRML(M,        COMMA,     DOT,      FSLH)
+            &kp Z       &kp X      &kp C       &kp V     &kp B          &kp N     &kp M      &kp COMMA  &kp DOT  &kp FSLH
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
-        //           │  锁屏    │     回车  │ Esc     │ 鼠标右键   │   │ 鼠标左键 │退格  │空格                │F14  │
-        //           │          │      层1  │ 编辑层5  │           │   │        │层2  │左Shift              │F14  │
-                    &mac_sleep  &lt 1 ENTER  &lt  5 ESC  &mkp RCLK     &mkp LCLK  &lt 2 BSPC &mt LSHFT SPACE  &kp F14
+        //           │  锁屏    │     回车  │ Esc      │ 鼠标右键   │   │ 鼠标左键 │退格  │空格                │F14  │
+        //           │          │      层1  │ 编辑层5  │           │   │        │层2   │右alt               │F14  │
+                    &mac_sleep  &lt 1 ENTER  &lt  5 ESC  &mkp RCLK     &mkp LCLK  &lt 2 BSPC &mt RALT SPACE  &kp F14
         //                                 ╰──────────┴──────────╯   ╰──────────┴──────────╯
             >;
             // 编码器绑定：左侧编码器控制鼠标滚轮上下，右侧编码器控制横向滚动
@@ -194,10 +193,10 @@
         //│ F5       │ F6       │  F7      │  F8      │ PAGE UP  │   │ -              │ 4        │ 5        │ 6        │  +          │
         //│ F5       │ F6       │ F7       │ F8       │ 上一页    │   │ 减号            │ 4        │ 5        │ 6        │ 加号        │
             &kp F5     &kp F6      &kp F7     &kp F8    &kp PG_UP      &kp KP_MINUS     &kp N4     &kp N5    &kp N6      &kp KP_PLUS   
-        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
-        //│ F1       │  F2      │  F3       │  F4     │ PAGE DN  │   │ *              │ 1        │ 2        │ 3        │ /           │
-        //│ F1       │ F2       │ F3       │ F4       │ 下一页    │   │ 乘号            │ 1        │ 2        │ 3        │ 除号        │
-           &kp F1     &kp F2     &kp F3     &kp F4     &kp PG_DN       &kp KP_MULTIPLY  &kp N1     &kp N2     &kp N3     &kp KP_DIVIDE 
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼───────────────┤
+        //│ F1       │  F2      │  F3       │  F4     │ PAGE DN  │   │ *              │ 1        │ 2        │ 3        │ /            │
+        //│ F1       │ F2       │ F3       │ F4       │ 下一页    │   │ 乘号            │ 1        │ 2        │ 3        │ 除号         │
+           &kp F1     &kp F2     &kp F3     &kp F4     &kp PG_DN       &kp KP_MULTIPLY  &kp N1     &kp N2     &kp N3     &ht BSLH KP_DIVIDE 
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
         //           │ 睡眠宏   │ 保持     │ 保持     │ 保持      │   │ 保持     │ 0        │ .         │ 保持      │
                        &win_sleep  &trans    &trans     &trans         &trans     &kp DOT     &kp N0       &trans
@@ -211,17 +210,17 @@
         sym_layer {
             bindings = <
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭────────────┬──────────┬──────────┬──────────┬──────────╮
-        //│  '       │  "       │  !       │  *       │  ~       │   │ scroll up  │  _       │          │  `       │  |       │
-        //│ 单引号   │ 双引号   │ 感叹号   │ 星号     │ 波浪号    │   │ 鼠标上滚    │ 下划线   │ 保持     │ 反引号   │ 竖线     │
-            &kp SQT     &kp DQT   &kp EXCL   &kp STAR   &kp TILDE      &msc SCRL_UP    &kp UNDER  &trans  &kp GRAVE  &kp PIPE 
+        //│  '       │  "       │  !       │  *       │  ~       │   │ scroll up  │  _       │ `        │  `       │  |       │
+        //│ 单引号    │ 双引号    │ 感叹号    │ 星号      │ 波浪号    │   │ 鼠标下滚    │ 下划线   │ 反引号     │ 反引号   │ 竖线     │
+            &kp SQT     &kp DQT   &kp EXCL   &kp STAR   &kp TILDE      &msc SCRL_DOWN    &kp UNDER  &kp GRAVE  &kp GRAVE  &kp PIPE 
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────┼──────────┼──────────┼──────────┼──────────┤
         //│  @       │  #       │  $       │  (       │  )       │   │ scroll down│  [       │  ]       │ {        │  }       │
-        //│ @符号    │ #号      │ $符号    │ 左括号   │ 右括号    │   │ 鼠标下滚    │ 左中括号 │ 右中括号 │ 左花括号 │ 右花括号 │
-            &kp AT     &kp HASH   &kp DLLR   &kp LPAR   &kp RPAR       &msc SCRL_DOWN  &kp LBKT   &kp RBKT  &kp LBRC   &kp RBRC 
+        //│ @符号    │ #号      │ $符号    │ 左括号   │ 右括号    │   │ 鼠标上滚    │ 左中括号 │ 右中括号 │ 左花括号 │ 右花括号 │
+            &kp AT     &kp HASH   &kp DLLR   &kp LPAR   &kp RPAR       &msc SCRL_UP  &kp LBKT   &kp RBKT  &kp LBRC   &kp RBRC 
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────┼──────────┼──────────┼──────────┼──────────┤
         //│          │  %       │          │ ^        │  \       │   │  &         │          │          │          │          │
-        //│ 保持     │ 百分号   │ 保持     │ 脱字符   │ 反斜杠    │   │ &符号      │ 保持     │ 保持     │ 保持     │ 保持     │
-            &trans     &kp PRCNT  &trans     &kp CARET  &kp BSLH       &kp AMPS     &trans     &trans    &trans     &trans
+        //│ 保持      │ 百分号    │ 保持      │ 脱字符    │ 反斜杠    │   │ &符号      │ 保持     │ 保持     │ 保持     │ 保持     │
+            &trans     &kp PRCNT  &trans    &kp CARET  &kp BSLH       &kp AMPS     &trans     &trans    &trans     &trans
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├────────────┼──────────┼──────────┴──────────┴──────────╯
         //                                 │ 保持     │ 保持     │ 保持     │ 保持      │   │ 保持     │ 保持     │ 保持     │ 保持     │
                         &trans     &trans    &trans     &trans         &trans       &trans     &trans     &trans
@@ -281,10 +280,9 @@
         // 5 编辑层
         layer_5 {
             bindings = <
-        //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭──────────┬──────────┬──────────┬──────────┬──────────╮
-        //│  Q       │  W       │  E       │  R       │  T       │   │  撤销       │  U       │  I       │  重做       │  P       │
-        //│ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │   │ 保留层，基础QWERTY布局（无Home Row Mods修饰键）        │
-            &kp Q      &kp W      &kp E      &kp R      &kp T          &kp LG(Z)   &kp U      &kp I      &kp LS(LG(Z))      &kp P
+        //╭────────────┬────────────┬────────────┬────────────┬─────────────╮   ╭─────────────────────┬────────────┬────────────┬────────────┬────────────╮
+        //│  Q         │  W         │  E         │  R         │  T          │   │  撤销                │  U         │  I         │  重做       │  P        │
+            &kp Q       &kp W        &kp E        &kp R        &kp T             &ht LS(LG(Z)) LG(Z)   &kp U      &kp I      &kp LS(LG(Z))      &kp P
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┼──────────┼──────────┤
         //│  A       │  S       │  D       │  F       │  G       │   │  H       │  J       │  K       │  L       │ ; :      │
             &kp A      &kp S      &kp D      &kp F      &kp G          &kp H      &kp J      &kp K      &kp L      &kp SEMI
@@ -482,15 +480,15 @@
         //╭──────────┬──────────┬──────────┬──────────┬──────────╮   ╭────────────────────────┬──────────────────────┬───────────────────┬─────────────┬─────────────╮
         //│   Q      │  W       │  E       │  R       │  T       │   │ All3                   │ 7                    │ 8                 │ 9        │  =          │
         //│ Q       │ W      │ E      │ E      │ R    │  T       │   | All3                   │ 7                    │ 8                 │ 9        │ 等于号       │
-            &ht LAS(Q) LA(Q)  &ht LAS(W) LA(W)  &kp LCGAS(E)      &kp LCGAS(R)      &ht LAS(T) LA(T)         &ht LCGAS(N3) LCGAS(N3)  &ht LAS(N7) LA(N7)     &ht LAS(N8) LA(N8)   &ht LAS(N9) LA(N9)    &ht LAS(EQUAL) LA(EQUAL)  
+            &ht LAS(Q) LA(Q)  &ht LAS(W) LA(W)  &kp LC(LA(LS(LG(E))))  &kp LC(LA(LS(LG(R))))      &ht LAS(T) LA(T)         &ht LCGAS(N3) LCGAS(N3)  &ht LAS(N7) LA(N7)     &ht LAS(N8) LA(N8)   &ht LAS(N9) LA(N9)    &ht LAS(EQUAL) LA(EQUAL)  
         //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
         //│ A       │  S       │  D       │  F       │  G       │   │ All2           │ 4        │ 5        │ 6        │  +          │
         //│ A       │  S       │  D       │  F       │  G        │   │ All2            │ 4        │ 5        │ 6        │ 加号        │
-            &ht LAS(A) LA(A)      &ht LAS(S) LA(S)      &ht LAS(D) LA(D)      &ht LAS(F) LA(F)      &ht LAS(G) LA(G)       &ht LCGAS(N2) LCGAS(N2)     &ht LAS(N4) LA(N4)     &ht LAS(N5) LA(N5)    &ht LAS(N6) LA(N6)      &ht LAS(KP_PLUS) LA(KP_PLUS)   
-        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├────────────────┼──────────┼──────────┼──────────┼─────────────┤
+            &ht LAS(A) LA(A)      &kp LC(LA(LS(LG(S))))      &ht LAS(D) LA(D)      &ht LAS(F) LA(F)      &ht LAS(G) LA(G)       &ht LCGAS(N2) LCGAS(N2)     &ht LAS(N4) LA(N4)     &ht LAS(N5) LA(N5)    &ht LAS(N6) LA(N6)      &ht LAS(KP_PLUS) LA(KP_PLUS)   
+        //├──────────┼──────────┼──────────┼──────────┼──────────┤   ├─────────────────┼──────────┼──────────┼──────────┼─────────────┤
         //│  Z       │  X       │  C       │  V       │  B       │   │ All1            │ 1        │ 2        │ 3        │ /           │
-        //│   Z       │  X       │  C       │  V       │  B       │   │ All1            │ 1        │ 2        │ 3        │ 除号        │
-           &ht LAS(Z) LA(Z)      &ht LAS(X) LA(X)      &ht LAS(C) LA(C)      &ht LAS(V) LA(V)      &ht LAS(B) LA(B)        &ht LCGAS(N1) LCGAS(N1)  &ht LAS(N1) LA(N1)     &ht LAS(N2) LA(N2)     &ht LAS(N3) LA(N3)     &ht LA(DOT) LA(KP_DIVIDE) 
+        //│   Z      │  X       │  C       │  V       │  B       │   │ All1            │ 1        │ 2        │ 3        │ 除号        │
+           &ht LAS(Z) LA(Z)  &ht LAS(X) LA(X)  &ht LAS(C) LA(C)  &ht LAS(V) LA(V)  &ht LAS(B) LA(B)  &ht LCGAS(N1) LCGAS(N1)  &ht LAS(N1) LA(N1)     &ht LAS(N2) LA(N2)     &ht LAS(N3) LA(N3)     &ht LAS(DOT) LAS(KP_DIVIDE) 
         //╰──────────┴──────────┴──────────┼──────────┼──────────┤   ├──────────┼──────────┼──────────┴──────────┴──────────╯
         //           │ 保持      │ 保持     │ 保持      │ 保持      │   │ 保持     │ .        │ 0         │ 保持      │
                        &trans  &trans    &trans     &trans         &trans     &ht LAS(DOT) LA(DOT)     &ht LAS(N0) LA(N0)       &trans
